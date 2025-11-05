@@ -1,0 +1,20 @@
+FROM node:20-alpine AS base
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install --omit=dev
+
+RUN apk add --no-cache postgresql-client
+
+COPY server ./server
+COPY services ./services
+COPY types.ts ./types.ts
+COPY content ./content
+
+ENV NODE_ENV=production
+ENV PORT=9000
+
+EXPOSE 9000
+
+CMD ["node", "server/index.js"]

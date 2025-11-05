@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QuantumLeap AI - Agency Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-primary': '#22C55E', // Green
+              'brand-secondary': '#86EFAC', // Light Green
+              'brand-accent': '#3B82F6', // Blue
+              'brand-accent-teal': '#14B8A6', // Teal
+              'brand-accent-orange': '#F97316', // Orange
+              'brand-bg-light': '#F9FAFB',
+              'brand-bg-light-alt': '#F3F4F6',
+              'brand-text-dark': '#1F2937',
+              'brand-text-muted': '#6B7281',
+              'brand-surface': '#FFFFFF',
+              'brand-border': '#E5E7EB',
+              'brand-text-green-dark': '#14532D',
+            },
+            animation: {
+              'fade-in': 'fadeIn 1.5s ease-in-out',
+              'slide-in-up': 'slideInUp 1s ease-out forwards',
+              'gradient-x': 'gradient-x 15s ease infinite',
+              'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            },
+            textShadow: {
+              'sm': '0 1px 2px var(--tw-shadow-color)',
+              'md': '0 2px 4px var(--tw-shadow-color)',
+              'lg': '0 4px 8px var(--tw-shadow-color)',
+            },
+            keyframes: {
+              fadeIn: {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+              slideInUp: {
+                '0%': { transform: 'translateY(50px)', opacity: 0 },
+                '100%': { transform: 'translateY(0)', opacity: 1 },
+              },
+              'gradient-x': {
+                '0%, 100%': { 'background-position': '0% 50%' },
+                '50%': { 'background-position': '100% 50%' },
+              },
+              pulse: {
+                '50%': { opacity: '.75' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.28.0"
+  }
+}
+</script>
+</head>
+  <body class="bg-brand-bg-light text-brand-text-dark">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+  </body>
+</html>

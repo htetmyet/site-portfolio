@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: landing_page
+      POSTGRES_USER: landing_admin
+      POSTGRES_PASSWORD: landing_admin
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5444:5444"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgres://landing_admin:landing_admin@db:5432/landing_page
+      JWT_SECRET: super-secret-change-me
+      CORS_ORIGINS: http://localhost:5173,http://localhost:2323,http://127.0.0.1:2323,http://frontend
+      NODE_ENV: production
+      PORT: 9000
+    ports:
+      - "9000:9000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:9000/api
+        VITE_GEMINI_API_KEY: ${VITE_GEMINI_API_KEY:-}
+    depends_on:
+      - backend
+    ports:
+      - "2323:2323"
+
+volumes:
+  pgdata:
