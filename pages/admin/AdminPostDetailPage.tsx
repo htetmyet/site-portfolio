@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import MarkdownEditor from '../../components/MarkdownEditor';
 import type { Post } from '../../types';
 import { createPost, deletePost, fetchPost, updatePost } from '../../services/apiClient';
 
@@ -13,12 +14,19 @@ const emptyPost: Post = {
   publishedAt: null,
 };
 
+const parseTags = (value: string) =>
+  value
+    .split(',')
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
 const AdminPostDetailPage: React.FC = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = !id || id === 'new';
 
   const [postDraft, setPostDraft] = useState<Post>(emptyPost);
+  const [tagsInput, setTagsInput] = useState('');
   const [loading, setLoading] = useState(!isNew);
   const [saving, setSaving] = useState(false);
   const [status, setStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
@@ -26,6 +34,7 @@ const AdminPostDetailPage: React.FC = () => {
   useEffect(() => {
     if (isNew) {
       setPostDraft(emptyPost);
+      setTagsInput('');
       setLoading(false);
       return;
     }
@@ -38,6 +47,7 @@ const AdminPostDetailPage: React.FC = () => {
         const data = await fetchPost(Number(id));
         if (isMounted) {
           setPostDraft({ ...emptyPost, ...data });
+          setTagsInput((data.tags ?? []).join(', '));
         }
       } catch (err: any) {
         if (isMounted) {
@@ -65,9 +75,11 @@ const AdminPostDetailPage: React.FC = () => {
     setSaving(true);
     setStatus(null);
 
+    const normalizedTags = parseTags(tagsInput);
+
     const payload: Post = {
       ...postDraft,
-      tags: postDraft.tags,
+      tags: normalizedTags,
       publishedAt: postDraft.publishedAt || null,
     };
 
@@ -79,6 +91,7 @@ const AdminPostDetailPage: React.FC = () => {
       } else if (id) {
         const updated = await updatePost(Number(id), payload);
         setPostDraft({ ...emptyPost, ...updated });
+        setTagsInput((updated.tags ?? []).join(', '));
         setStatus({ type: 'success', message: `Post "${updated.title}" updated.` });
       }
     } catch (err: any) {
@@ -164,23 +177,23 @@ const AdminPostDetailPage: React.FC = () => {
             />
           </label>
 
-          <label className="flex flex-col text-sm font-medium text-brand-text-dark">
-            Content
-            <textarea
-              required
-              value={postDraft.content}
-              onChange={(event) => handleChange('content', event.target.value)}
-              rows={10}
-              className="mt-1 rounded-lg border border-brand-border bg-brand-bg-light px-3 py-2 focus:border-brand-primary focus:outline-none"
-            />
-          </label>
+          <MarkdownEditor
+            label="Content"
+            required
+            value={postDraft.content}
+            onChange={(value) => handleChange('content', value)}
+          />
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="flex flex-col text-sm font-medium text-brand-text-dark">
               Tags (comma separated)
               <input
-                value={postDraft.tags.join(', ')}
-                onChange={(event) => handleChange('tags', event.target.value.split(',').map((tag) => tag.trim()).filter(Boolean))}
+                value={tagsInput}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setTagsInput(value);
+                  setPostDraft((prev) => ({ ...prev, tags: parseTags(value) }));
+                }}
                 className="mt-1 rounded-lg border border-brand-border bg-brand-bg-light px-3 py-2 focus:border-brand-primary focus:outline-none"
               />
             </label>

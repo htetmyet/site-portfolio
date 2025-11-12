@@ -8,7 +8,9 @@ import servicesRoutes from './routes/services.js';
 import productsRoutes from './routes/products.js';
 import postsRoutes from './routes/posts.js';
 import adminUsersRoutes from './routes/adminUsers.js';
+import contactRoutes from './routes/contact.js';
 import { pool } from './db.js';
+import { runMigrations } from './scripts/runMigrations.js';
 
 dotenv.config();
 
@@ -44,12 +46,24 @@ app.use('/api/services', servicesRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error('[unhandled]', err);
   res.status(err.status || 500).json({ message: err.message || 'Internal server error' });
 });
 
-app.listen(port, () => {
-  console.log(`API listening on port ${port}`);
-});
+const start = async () => {
+  try {
+    await runMigrations();
+  } catch (error) {
+    console.error('[startup] failed to apply migrations', error);
+    process.exit(1);
+  }
+
+  app.listen(port, () => {
+    console.log(`API listening on port ${port}`);
+  });
+};
+
+start();

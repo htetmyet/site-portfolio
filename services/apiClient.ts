@@ -1,12 +1,27 @@
 import type { HeroSlide, Post, Product, Service, SiteContent, SiteSettings, AdminUser } from '../types';
 import { getAuthToken } from './authStorage';
 
+const normalizeBaseUrl = (value: string) => (value.endsWith('/') ? value.slice(0, -1) : value);
+
 const resolveBaseUrl = () => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL;
+  const envBaseUrl = import.meta.env.VITE_API_BASE_URL;
+  if (envBaseUrl) {
+    if (envBaseUrl.startsWith('/')) {
+      return normalizeBaseUrl(envBaseUrl);
+    }
+    if (typeof window !== 'undefined') {
+      try {
+        const candidate = new URL(envBaseUrl, window.location.origin);
+        return normalizeBaseUrl(candidate.toString());
+      } catch (error) {
+        console.warn('[apiClient] invalid VITE_API_BASE_URL; falling back to relative /api', error);
+        return '/api';
+      }
+    }
+    return normalizeBaseUrl(envBaseUrl);
   }
   if (typeof window !== 'undefined') {
-    return `${window.location.origin}/api`;
+    return '/api';
   }
   return 'http://localhost:9000/api';
 };
@@ -182,4 +197,12 @@ export const fetchSiteContent = async (): Promise<SiteContent> => {
     products,
     posts,
   };
+};
+
+export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {
+  return request<{ message: string }>('/contact', {
+    method: 'POST',
+    body: payload,
+    token: null,
+  });
 };

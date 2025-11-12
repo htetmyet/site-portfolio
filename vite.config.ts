@@ -6,11 +6,18 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     const rawBase = env.VITE_BASE_PATH || env.BASE_PATH || '/';
     const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
+    const devApiProxy = env.VITE_DEV_API_PROXY || 'http://localhost:9000';
     return {
       base,
       server: {
         port: 3000,
         host: '0.0.0.0',
+        proxy: {
+          '/api': {
+            target: devApiProxy,
+            changeOrigin: true,
+          },
+        },
       },
       plugins: [react()],
       define: {
