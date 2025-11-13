@@ -11,7 +11,7 @@ import Footer from '../components/Footer';
 import ProductDetail from '../components/ProductDetail';
 import type { Product, SiteContent } from '../types';
 import { defaultContent } from '../content/defaultContent';
-import { fetchPosts, fetchProducts, fetchServices, fetchSettings } from '../services/apiClient';
+import { fetchPosts, fetchProducts, fetchProjects, fetchServices, fetchSettings } from '../services/apiClient';
 
 const LandingPage: React.FC = () => {
   const [content, setContent] = useState<SiteContent>(defaultContent);
@@ -23,8 +23,13 @@ const LandingPage: React.FC = () => {
     let isMounted = true;
     const loadContent = async () => {
       try {
-        const [settingsResp, servicesResp] = await Promise.all([fetchSettings(), fetchServices()]);
-        const [productsResp, postsResp] = await Promise.all([fetchProducts(), fetchPosts()]);
+        const [settingsResp, servicesResp, projectsResp, productsResp, postsResp] = await Promise.all([
+          fetchSettings(),
+          fetchServices(),
+          fetchProjects(),
+          fetchProducts(),
+          fetchPosts(),
+        ]);
 
         if (isMounted) {
           const blogLimit = settingsResp.settings.blogPreviewLimit ?? defaultContent.settings.blogPreviewLimit ?? 3;
@@ -44,12 +49,14 @@ const LandingPage: React.FC = () => {
 
           const resolvedServices = servicesResp.length ? servicesResp : defaultContent.services;
           const resolvedProducts = productsResp.length ? productsResp : defaultContent.products;
+          const resolvedProjects = projectsResp.length ? projectsResp : defaultContent.projects;
           const resolvedPosts = postsResp.length ? postsResp : defaultContent.posts;
 
           setContent({
             settings: settingsResp.settings,
             heroSlides: resolvedSlides,
             services: resolvedServices,
+            projects: resolvedProjects,
             products: resolvedProducts.slice(0, Math.max(1, productLimit)),
             posts: resolvedPosts.slice(0, Math.max(1, blogLimit)),
           });
@@ -103,7 +110,7 @@ const LandingPage: React.FC = () => {
           <>
             <Hero slides={content.heroSlides} />
             <Services services={content.services} />
-            <Portfolio />
+            <Portfolio projects={content.projects} />
             <div className="bg-brand-bg-light-alt">
               <Products products={content.products} onProductSelect={handleProductSelect} viewAllHref="/products" />
             </div>

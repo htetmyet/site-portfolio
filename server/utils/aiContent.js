@@ -1,3 +1,5 @@
+import { createHash } from 'crypto';
+
 const DEFAULT_OLLAMA_HOST = 'http://localhost:11434';
 const DEFAULT_OLLAMA_MODEL = 'llama3.2:1b';
 
@@ -83,123 +85,212 @@ const truncate = (value = '', limit = 280) => {
   return `${trimmed.slice(0, limit - 1).trim()}…`;
 };
 
-const fetchJsonWithTimeout = async (url, { timeout = 8000, ...init } = {}) => {
+const defaultFeedHeaders = {
+  'User-Agent': 'QuantumLeapAI/1.0 (+https://github.com/quantumleapai/site-portfolio)',
+  Accept: 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
+};
+
+const fetchTextWithTimeout = async (url, { timeout = 8000, headers = {}, ...init } = {}) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
   try {
-    const response = await fetch(url, { ...init, signal: controller.signal });
+    const response = await fetch(url, {
+      ...init,
+      signal: controller.signal,
+      headers: { ...defaultFeedHeaders, ...headers },
+    });
     if (!response.ok) {
       const text = await response.text();
       throw new Error(text || `Request failed with status ${response.status}`);
     }
-    return response.json();
+    const text = await response.text();
+    return text;
   } finally {
     clearTimeout(timer);
   }
 };
 
-const buildHnEndpoint = (keywords) => {
-  const queryValue = encodeURIComponent(sanitizeKeywords(keywords).join(' '));
-  return `https://hn.algolia.com/api/v1/search_by_date?query=${queryValue}&tags=story`;
+const fetchJsonWithTimeout = async (url, options = {}) => {
+  return fetchTextWithTimeout(url, { ...options }).then((text) => {
+    try {
+      return JSON.parse(text);
+    } catch (error) {
+      throw new Error(`Failed to parse JSON from ${url}: ${error.message}`);
+    }
+  });
 };
 
-const fetchHackerNewsStories = async (keywords) => {
+const htmlEntityMap = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+const decodeHtmlEntities = (value = '') =>
+  value
+    .replace(/&#(\d+);/g, (_, code) => String.fromCharCode(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    .replace(/&(amp|lt|gt|quot|apos);/gi, (match, entity) => htmlEntityMap[entity.toLowerCase()] || match);
+
+
+const countWords = (value = '') => {
+  if (!value) return 0;
+  return value.trim().split(/\s+/).filter(Boolean).length;
+};
+
+const normalizeDate = (value) => {
+  if (!value) return null;
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) {
+    return null;
+  }
+  return new Date(timestamp).toISOString();
+};
+
+const MIN_ARTICLE_WORDS = 100;
+
+const AI_SOURCES = [
+  {
+    key: 'techcrunch',
+    name: 'TechCrunch AI',
+    type: 'wp',
+    baseUrl: 'https://techcrunch.com/wp-json/wp/v2/posts',
+    params: { per_page: 20 },
+    defaultSearch: 'artificial intelligence',
+  },
+  {
+    key: 'venturebeat',
+    name: 'VentureBeat AI',
+    type: 'wp',
+    baseUrl: 'https://venturebeat.com/wp-json/wp/v2/posts',
+    params: { per_page: 20 },
+    defaultSearch: 'artificial intelligence',
+  },
+  {
+    key: 'marktechpost',
+    name: 'MarkTechPost',
+    type: 'wp',
+    baseUrl: 'https://www.marktechpost.com/wp-json/wp/v2/posts',
+    params: { per_page: 20 },
+    defaultSearch: 'AI',
+  },
+  {
+    key: 'analyticsvidhya',
+    name: 'Analytics Vidhya',
+    type: 'wp',
+    baseUrl: 'https://www.analyticsvidhya.com/wp-json/wp/v2/posts',
+    params: { per_page: 20 },
+    defaultSearch: 'machine learning',
+  },
+  {
+    key: 'aitrends',
+    name: 'AI Trends',
+    type: 'wp',
+    baseUrl: 'https://www.aitrends.com/wp-json/wp/v2/posts',
+    params: { per_page: 20 },
+    defaultSearch: 'artificial intelligence',
+  },
+];
+
+const buildArticleId = (sourceKey, link, title) =>
+  createHash('sha1').update(`${sourceKey}:${link || ''}:${title || ''}`).digest('hex');
+
+const mapWpPostToArticle = (source, post) => {
+  const title = decodeHtmlEntities(post.title?.rendered || post.title || '').trim();
+  if (!title) {
+    return null;
+  }
+  const contentHtml = post.content?.rendered || post.content || post.excerpt?.rendered || '';
+  const plainContent = htmlToPlainText(decodeHtmlEntities(contentHtml));
+  if (countWords(plainContent) < MIN_ARTICLE_WORDS) {
+    return null;
+  }
+  const publishedAt = normalizeDate(post.date || post.modified);
+  const decodedLink = decodeHtmlEntities(post.link || '').trim() || null;
+  const excerpt = htmlToPlainText(decodeHtmlEntities(post.excerpt?.rendered || plainContent));
+
+  return {
+    id: `${source.key}-${buildArticleId(source.key, decodedLink, title)}`,
+    source: source.name,
+    title,
+    url: decodedLink,
+    publishedAt,
+    snippet: truncate(excerpt || plainContent, 220),
+    content: plainContent,
+  };
+};
+
+const fetchWpArticles = async (source, keywords) => {
   try {
-    const data = await fetchJsonWithTimeout(buildHnEndpoint(keywords));
-    if (!data?.hits?.length) {
+    const params = new URLSearchParams(source.params || {});
+    if (!params.has('per_page')) {
+      params.set('per_page', '20');
+    }
+    const searchQuery = keywords && keywords.length ? keywords.join(' ') : source.defaultSearch || '';
+    if (searchQuery) {
+      params.set('search', searchQuery);
+    }
+    const url = `${source.baseUrl}?${params.toString()}`;
+    const data = await fetchJsonWithTimeout(url, { timeout: source.timeout || 10000 });
+    if (!Array.isArray(data)) {
       return [];
     }
-    return data.hits
-      .map((hit) => {
-        const title = hit.title || hit.story_title;
-        if (!title) {
-          return null;
-        }
-        const storyText = hit.story_text ? htmlToPlainText(hit.story_text) : '';
-        const description = hit._highlightResult?.story_text?.value
-          ? htmlToPlainText(hit._highlightResult.story_text.value)
-          : storyText;
-
-        const contextLines = [
-          storyText,
-          hit.url ? `Source: ${hit.url}` : '',
-        ].filter(Boolean);
-
-        return {
-          id: `hn-${hit.objectID}`,
-          source: 'Hacker News',
-          title,
-          url: hit.url || hit.story_url || `https://news.ycombinator.com/item?id=${hit.objectID}`,
-          publishedAt: hit.created_at || null,
-          snippet: truncate(description || storyText || hit.title, 220),
-          content:
-            contextLines.join('\n\n') ||
-            `${title}${hit.url ? `\n\nSource: ${hit.url}` : ''}`,
-        };
-      })
-      .filter(Boolean)
-      .slice(0, 8);
+    return data.map((post) => mapWpPostToArticle(source, post)).filter(Boolean);
   } catch (error) {
-    console.error('[aiContent] Failed to load Hacker News feed', error);
+    console.warn(`[aiContent] Failed to scrape source: ${source.name}`, error.message || error);
     return [];
   }
 };
 
-const buildRedditEndpoint = (keywords) => {
-  const normalized = sanitizeKeywords(keywords);
-  if (normalized.length) {
-    const queryValue = encodeURIComponent(normalized.join(' OR '));
-    return `https://www.reddit.com/r/artificial/search.json?q=${queryValue}&restrict_sr=1&sort=new&limit=15`;
+const fetchSourceArticles = (source, keywords) => {
+  if (source.type === 'wp') {
+    return fetchWpArticles(source, keywords);
   }
-  return 'https://www.reddit.com/r/artificial.json?limit=10';
+  return Promise.resolve([]);
 };
 
-const fetchRedditPosts = async (keywords) => {
-  try {
-    const data = await fetchJsonWithTimeout(buildRedditEndpoint(keywords), {
-      headers: {
-        'User-Agent': 'site-portfolio-ai-content/1.0 (+https://github.com/owner/repo)',
-      },
-    });
-    const posts = data?.data?.children || [];
-    return posts
-      .map((entry) => {
-        const post = entry?.data;
-        if (!post?.title) {
-          return null;
-        }
-        const body = post.selftext ? post.selftext.trim() : '';
-        const contentBody = body || (post.url || '');
-        if (!contentBody) {
-          return null;
-        }
-        return {
-          id: `reddit-${post.id}`,
-          source: 'r/artificial',
-          title: post.title,
-          url: post.url || `https://www.reddit.com${post.permalink || ''}`,
-          publishedAt: post.created_utc ? new Date(post.created_utc * 1000).toISOString() : null,
-          snippet: truncate(body || post.title, 220),
-          content: body ? body : `${post.title}\n\nLink: ${post.url}`,
-        };
-      })
-      .filter(Boolean)
-      .slice(0, 8);
-  } catch (error) {
-    console.error('[aiContent] Failed to load Reddit feed', error);
-    return [];
+const filterByKeywords = (articles, keywords) => {
+  if (!keywords?.length) {
+    return articles;
   }
+  const normalized = keywords.map((word) => word.toLowerCase());
+  const filtered = articles.filter((article) => {
+    const haystack = `${article.title} ${article.snippet} ${article.source}`.toLowerCase();
+    return normalized.some((keyword) => haystack.includes(keyword));
+  });
+  return filtered.length ? filtered : articles;
+};
+
+const rotateArticles = (articles, limit = 12) => {
+  if (articles.length <= limit) {
+    return articles;
+  }
+  const offset = Math.floor(Date.now() / 60000) % articles.length;
+  const rotated = [...articles.slice(offset), ...articles.slice(0, offset)];
+  return rotated.slice(0, limit);
 };
 
 export const loadAiNews = async (keywords = []) => {
   const safeKeywords = sanitizeKeywords(keywords);
-  const [hn, reddit] = await Promise.all([fetchHackerNewsStories(safeKeywords), fetchRedditPosts(safeKeywords)]);
-  const combined = [...hn, ...reddit];
+  const sourceResults = await Promise.all(AI_SOURCES.map((source) => fetchSourceArticles(source, safeKeywords)));
+  let combined = sourceResults.flat();
+
+  if (!combined.length) {
+    throw new Error('No AI news sources are reachable at the moment.');
+  }
+
+  let filtered = filterByKeywords(combined, safeKeywords);
+  if (!filtered.length) {
+    filtered = combined;
+  }
   const seen = new Set();
   const deduped = [];
 
-  combined.forEach((article) => {
+  filtered.forEach((article) => {
     const key = article.title.toLowerCase();
     if (seen.has(key)) {
       return;
@@ -208,17 +299,14 @@ export const loadAiNews = async (keywords = []) => {
     deduped.push(article);
   });
 
-  if (!deduped.length) {
-    throw new Error('No AI news sources are reachable at the moment.');
-  }
+  const sorted = deduped.sort((a, b) => {
+    const aTime = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+    const bTime = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+    return bTime - aTime;
+  });
+  let curated = rotateArticles(sorted, 12);
 
-  return deduped
-    .sort((a, b) => {
-      const aTime = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-      const bTime = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-      return bTime - aTime;
-    })
-    .slice(0, 10);
+  return curated;
 };
 
 const sanitizeModelResponse = (raw) => raw.replace(/```json|```/gi, '').trim();
@@ -242,9 +330,10 @@ const tryParseModelJson = (raw) => {
   }
 };
 
-const buildPrompt = (title, content, tone) => {
+const buildPrompt = (title, content, tone, maxWords = 700) => {
   const trimmedContent = content.length > 9000 ? `${content.slice(0, 9000)}…` : content;
   const persona = resolveTone(tone);
+  const cappedWords = Number.isFinite(maxWords) ? Math.max(200, Math.min(2000, Math.round(maxWords))) : 700;
   return `You are writing as a ${persona}, crafting thought-leadership content for an AI consultancy blog.
 Rewrite and summarize the following article in a confident, data-first tone that matches the ${persona} persona.
 Return ONLY valid JSON with the schema:
@@ -256,7 +345,7 @@ Return ONLY valid JSON with the schema:
 
 Guidelines:
 - Highlight concrete metrics, research directions, or technical implications.
-- Keep Markdown under 700 words.
+- Keep Markdown under ${cappedWords} words.
 - Use descriptive sub-headings (##) and include at least one bulleted list.
 - End with a short call-to-action paragraph.
 
@@ -267,12 +356,14 @@ ${trimmedContent}
 """`;
 };
 
-export const rewriteArticleWithOllama = async ({ title, content, model: modelOverride, tone }) => {
+export const rewriteArticleWithOllama = async ({ title, content, model: modelOverride, tone, maxWords }) => {
   if (!title || !content) {
     throw new Error('Both title and content are required to rewrite the article.');
   }
 
   const model = modelOverride?.trim() || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
+  const desiredLimit = Number.isFinite(maxWords) ? Number(maxWords) : null;
+  const safeLimit = desiredLimit ? Math.max(200, Math.min(2000, Math.round(desiredLimit))) : 700;
 
   const payload = await runWithOllamaHost('Ollama generate', async (ollamaHost) => {
     const response = await fetch(`${ollamaHost}/api/generate`, {
@@ -280,7 +371,7 @@ export const rewriteArticleWithOllama = async ({ title, content, model: modelOve
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
-        prompt: buildPrompt(title, content, tone),
+        prompt: buildPrompt(title, content, tone, safeLimit),
         stream: false,
         keep_alive: 0,
       }),

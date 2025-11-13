@@ -9,6 +9,7 @@ import type {
   AiNewsItem,
   AiRewriteResult,
   AiModel,
+  Project,
 } from '../types';
 import { getAuthToken } from './authStorage';
 
@@ -121,6 +122,22 @@ export const deleteService = async (id: number): Promise<void> => {
   return request(`/services/${id}`, { method: 'DELETE' });
 };
 
+export const fetchProjects = async (): Promise<Project[]> => {
+  return request('/projects');
+};
+
+export const createProject = async (project: Project): Promise<Project> => {
+  return request('/projects', { method: 'POST', body: project });
+};
+
+export const updateProject = async (id: number, project: Project): Promise<Project> => {
+  return request(`/projects/${id}`, { method: 'PUT', body: project });
+};
+
+export const deleteProject = async (id: number): Promise<void> => {
+  return request(`/projects/${id}`, { method: 'DELETE' });
+};
+
 export const fetchProducts = async (): Promise<Product[]> => {
   return request('/products');
 };
@@ -194,9 +211,10 @@ export const deleteAdminUser = async (id: number): Promise<void> => {
 };
 
 export const fetchSiteContent = async (): Promise<SiteContent> => {
-  const [settings, services, products, posts] = await Promise.all([
+  const [settings, services, projects, products, posts] = await Promise.all([
     fetchSettings(),
     fetchServices(),
+    fetchProjects(),
     fetchProducts(),
     fetchPosts(),
   ]);
@@ -205,6 +223,7 @@ export const fetchSiteContent = async (): Promise<SiteContent> => {
     settings: settings.settings,
     heroSlides: settings.heroSlides,
     services,
+    projects,
     products,
     posts,
   };
@@ -228,7 +247,7 @@ export const fetchAiNews = async (keywords?: string): Promise<AiNewsItem[]> => {
   return response.articles;
 };
 
-export const rewriteAiPost = async (payload: { title: string; content: string; model?: string; tone?: string }): Promise<AiRewriteResult> => {
+export const rewriteAiPost = async (payload: { title: string; content: string; model?: string; tone?: string; maxWords?: number }): Promise<AiRewriteResult> => {
   return request('/ai-content/rewrite', { method: 'POST', body: payload });
 };
 

@@ -2,15 +2,20 @@ import React, { useEffect, useState } from 'react';
 import GeneralSettingsForm from '../../components/admin/GeneralSettingsForm';
 import HeroSlidesForm from '../../components/admin/HeroSlidesForm';
 import ServicesManager from '../../components/admin/ServicesManager';
-import type { HeroSlide, Service, SiteSettings } from '../../types';
+import ProjectsManager from '../../components/admin/ProjectsManager';
+import type { HeroSlide, Project, Service, SiteSettings } from '../../types';
 import {
   fetchServices,
+  fetchProjects,
   fetchSettings,
   updateGeneralSettings,
   updateHeroSlides,
   createService,
   updateService,
   deleteService,
+  createProject,
+  updateProject,
+  deleteProject,
 } from '../../services/apiClient';
 
 const AdminSettingsPage: React.FC = () => {
@@ -19,6 +24,7 @@ const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [services, setServicesState] = useState<Service[]>([]);
+  const [projects, setProjectsState] = useState<Project[]>([]);
   const [savingGeneral, setSavingGeneral] = useState(false);
   const [savingHero, setSavingHero] = useState(false);
 
@@ -29,11 +35,16 @@ const AdminSettingsPage: React.FC = () => {
       setLoading(true);
       setError('');
       try {
-        const [settingsResp, servicesResp] = await Promise.all([fetchSettings(), fetchServices()]);
+        const [settingsResp, servicesResp, projectsResp] = await Promise.all([
+          fetchSettings(),
+          fetchServices(),
+          fetchProjects(),
+        ]);
         if (!isMounted) return;
         setSettings(settingsResp.settings);
         setHeroSlides(settingsResp.heroSlides);
         setServicesState(servicesResp);
+        setProjectsState(projectsResp);
       } catch (err: any) {
         if (!isMounted) return;
         setError(err.message || 'Unable to load settings');
@@ -96,6 +107,23 @@ const AdminSettingsPage: React.FC = () => {
     setServicesState((prev) => prev.filter((item) => item.id !== id));
   };
 
+  const handleCreateProject = async (project: Project) => {
+    const created = await createProject(project);
+    setProjectsState((prev) => [...prev, created]);
+    return created;
+  };
+
+  const handleUpdateProject = async (id: number, project: Project) => {
+    const updated = await updateProject(id, project);
+    setProjectsState((prev) => prev.map((item) => (item.id === id ? updated : item)));
+    return updated;
+  };
+
+  const handleDeleteProject = async (id: number) => {
+    await deleteProject(id);
+    setProjectsState((prev) => prev.filter((item) => item.id !== id));
+  };
+
   return (
     <div className="space-y-8">
       {error && (
@@ -119,6 +147,12 @@ const AdminSettingsPage: React.FC = () => {
             onCreate={handleCreateService}
             onUpdate={handleUpdateService}
             onDelete={handleDeleteService}
+          />
+          <ProjectsManager
+            projects={projects}
+            onCreate={handleCreateProject}
+            onUpdate={handleUpdateProject}
+            onDelete={handleDeleteProject}
           />
         </>
       )}

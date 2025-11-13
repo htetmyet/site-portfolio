@@ -13,6 +13,10 @@ const iconOptions = [
   { value: 'brain', label: 'Brain Circuit' },
   { value: 'analytics', label: 'Analytics' },
   { value: 'automation', label: 'Automation' },
+  { value: 'cloud', label: 'Cloud Intelligence' },
+  { value: 'shield', label: 'Secure AI' },
+  { value: 'spark', label: 'Generative Spark' },
+  { value: 'vision', label: 'Computer Vision' },
   { value: 'custom', label: 'Custom' },
 ];
 

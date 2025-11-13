@@ -1,4 +1,4 @@
-export type ServiceIconKey = 'brain' | 'analytics' | 'automation' | 'custom';
+export type ServiceIconKey = 'brain' | 'analytics' | 'automation' | 'custom' | 'cloud' | 'shield' | 'spark' | 'vision';
 
 export interface Service {
   id?: number;
@@ -29,6 +29,7 @@ export interface SiteSettings {
   blogPreviewLimit?: number | null;
   productPreviewLimit?: number | null;
   logoUrl?: string | null;
+  backgroundPattern?: string | null;
 }
 
 export interface Product {
@@ -43,11 +44,15 @@ export interface Product {
 }
 
 export interface Project {
-  image: string;
-  category: string;
+  id?: number;
   title: string;
+  category: string;
   description: string;
   tags: string[];
+  imageUrl?: string | null;
+  displayOrder?: number | null;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Testimonial {
@@ -79,6 +84,7 @@ export interface SiteContent {
   settings: SiteSettings;
   heroSlides: HeroSlide[];
   services: Service[];
+  projects: Project[];
   products: Product[];
   posts: Post[];
 }

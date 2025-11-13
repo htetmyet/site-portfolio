@@ -24,13 +24,15 @@ router.get('/news', authenticate, async (req, res) => {
 });
 
 router.post('/rewrite', authenticate, async (req, res) => {
-  const { title, content, model, tone } = req.body || {};
+  const { title, content, model, tone, maxWords } = req.body || {};
   if (!title || !content) {
     return res.status(400).json({ message: 'title and content are required' });
   }
 
   try {
-    const result = await rewriteArticleWithOllama({ title, content, model, tone });
+    const parsedLimit = Number(maxWords);
+    const normalizedLimit = Number.isFinite(parsedLimit) ? parsedLimit : undefined;
+    const result = await rewriteArticleWithOllama({ title, content, model, tone, maxWords: normalizedLimit });
     return res.json(result);
   } catch (error) {
     console.error('[ai-content/rewrite]', error);

@@ -1,4 +1,4 @@
-import type { HeroSlide, Post, Product, Service, SiteContent, SiteSettings } from '../types';
+import type { HeroSlide, Post, Product, Project, Service, SiteContent, SiteSettings } from '../types';
 
 const defaultHeroSlides: HeroSlide[] = [
   {
@@ -42,6 +42,36 @@ const defaultServices: Service[] = [
     description: 'Streamline your operations, reduce costs, and enhance efficiency by automating complex workflows and processes.',
     color: 'teal',
     iconKey: 'automation',
+  },
+  {
+    title: 'Responsible AI & Security',
+    description: 'Embed governance, privacy, and robust defenses into every AI workflow to keep your data secure.',
+    color: 'orange',
+    iconKey: 'shield',
+  },
+];
+
+const defaultProjects: Project[] = [
+  {
+    title: 'Project Sentinel',
+    category: 'Predictive Analytics',
+    description: 'Developed a predictive security system for a major logistics firm, reducing incidents by 35%.',
+    tags: ['Machine Learning', 'Data Visualization', 'Python'],
+    imageUrl: 'https://picsum.photos/800/600?random=4',
+  },
+  {
+    title: 'Echo AI Chatbot',
+    category: 'Natural Language Processing',
+    description: 'A customer service chatbot that resolved 80% of inquiries without human intervention, improving customer satisfaction.',
+    tags: ['NLP', 'React', 'Cloud AI'],
+    imageUrl: 'https://picsum.photos/800/600?random=5',
+  },
+  {
+    title: 'Visionary QC',
+    category: 'Computer Vision',
+    description: 'An automated quality control system for manufacturing, using computer vision to detect defects in real-time.',
+    tags: ['Computer Vision', 'IoT', 'Edge Computing'],
+    imageUrl: 'https://picsum.photos/800/600?random=6',
   },
 ];
 
@@ -139,6 +169,7 @@ export const defaultContent: SiteContent = {
   settings: defaultSettings,
   heroSlides: defaultHeroSlides,
   services: defaultServices,
+  projects: defaultProjects,
   products: defaultProducts,
   posts: defaultPosts,
 };

@@ -12,10 +12,11 @@ router.get('/', async (_req, res) => {
               description,
               color,
               icon_key AS "iconKey",
+              display_order AS "displayOrder",
               created_at AS "createdAt",
               updated_at AS "updatedAt"
          FROM services
-        ORDER BY display_order ASC, id ASC`,
+        ORDER BY display_order ASC NULLS LAST, id ASC`,
     );
     return res.json(result.rows);
   } catch (error) {

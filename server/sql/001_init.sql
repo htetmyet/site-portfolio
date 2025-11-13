@@ -45,6 +45,18 @@ CREATE TABLE IF NOT EXISTS services (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS projects (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    category TEXT NOT NULL,
+    description TEXT NOT NULL,
+    tags TEXT[] DEFAULT '{}',
+    image_url TEXT,
+    display_order INTEGER,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     title TEXT NOT NULL,
@@ -99,5 +111,6 @@ ALTER TABLE site_settings
     ADD COLUMN IF NOT EXISTS background_pattern TEXT DEFAULT 'mesh';
 
 CREATE INDEX IF NOT EXISTS idx_services_display_order ON services (display_order NULLS LAST, id);
+CREATE INDEX IF NOT EXISTS idx_projects_display_order ON projects (display_order NULLS LAST, id);
 CREATE INDEX IF NOT EXISTS idx_products_display_order ON products (display_order NULLS LAST, id);
 CREATE INDEX IF NOT EXISTS idx_posts_published_at ON posts (published_at DESC NULLS LAST);

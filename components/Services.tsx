@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Service } from '../types';
-import { BrainCircuitIcon, BarChartIcon, BotIcon, LightbulbIcon } from './icons';
+import { BrainCircuitIcon, BarChartIcon, BotIcon, LightbulbIcon, CloudSparkIcon, ShieldCircuitIcon, SparkIcon, VisionIcon } from './icons';
 
 const iconColorClasses: Record<string, string> = {
     green: 'bg-brand-primary/10',
@@ -20,6 +20,10 @@ const iconMap = {
   brain: BrainCircuitIcon,
   analytics: BarChartIcon,
   automation: BotIcon,
+  cloud: CloudSparkIcon,
+  shield: ShieldCircuitIcon,
+  spark: SparkIcon,
+  vision: VisionIcon,
   custom: LightbulbIcon,
 };
 

@@ -21,6 +21,15 @@ const AdminAiContentPage: React.FC = () => {
   const [modelsError, setModelsError] = useState('');
   const [keywords, setKeywords] = useState('AI');
   const [tone, setTone] = useState('data scientist');
+  const [maxWordsInput, setMaxWordsInput] = useState('700');
+
+  const normalizeWordLimit = (value: string): number | undefined => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      return undefined;
+    }
+    return Math.max(200, Math.min(2000, Math.round(parsed)));
+  };
 
   const selectedArticle = articles.find((item) => item.id === selectedArticleId) || null;
 
@@ -78,6 +87,7 @@ const AdminAiContentPage: React.FC = () => {
         content: selectedArticle.content,
         model: selectedModel || undefined,
         tone: tone.trim() || undefined,
+        maxWords: normalizeWordLimit(maxWordsInput),
       });
       setRewriteResult(result);
       setCopyState('idle');
@@ -137,6 +147,18 @@ const AdminAiContentPage: React.FC = () => {
                   <option key={option} value={option} />
                 ))}
               </datalist>
+            </label>
+            <label className="flex flex-col text-sm text-brand-text-muted md:flex-row md:items-center md:gap-3">
+              <span className="font-semibold text-brand-text-dark">Word limit</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                placeholder="e.g. 650"
+                value={maxWordsInput}
+                onChange={(event) => setMaxWordsInput(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-brand-border bg-white px-3 py-2 text-brand-text-dark md:mt-0"
+              />
             </label>
           </div>
           <div className="flex flex-wrap gap-3">
