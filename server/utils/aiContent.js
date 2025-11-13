@@ -90,7 +90,7 @@ const defaultFeedHeaders = {
   Accept: 'application/rss+xml, application/xml;q=0.9, */*;q=0.8',
 };
 
-const fetchTextWithTimeout = async (url, { timeout = 8000, headers = {}, ...init } = {}) => {
+const fetchTextWithTimeout = async (url, { timeout = 9000, headers = {}, ...init } = {}) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
 
@@ -334,13 +334,13 @@ const buildPrompt = (title, content, tone, maxWords = 700) => {
   const trimmedContent = content.length > 9000 ? `${content.slice(0, 9000)}…` : content;
   const persona = resolveTone(tone);
   const cappedWords = Number.isFinite(maxWords) ? Math.max(200, Math.min(2000, Math.round(maxWords))) : 700;
-  return `You are writing as a ${persona}, crafting thought-leadership content for an AI consultancy blog.
-Rewrite and summarize the following article in a confident, data-first tone that matches the ${persona} persona.
+  return `You are writing as a ${persona}, crafting very professional thought-leadership content for an AI consultancy blog.
+Rewrite and summarize the following article in a confident, data-first tone that matches the ${persona} persona with a little sense of humour.
 Return ONLY valid JSON with the schema:
 {
-  "title": "Compelling headline no longer than 16 words",
-  "summary": "2-3 sentence abstract in plain text",
-  "markdown": "Long-form article in Markdown (use headings, bullet lists, code fences if needed)"
+  "title": "Compelling headline no longer than 15 words",
+  "summary": "2-3 sentence abstract in plain text no longer than 30-40 words",
+  "markdown": "Long-form article in Markdown (use headings, sub-headings, quote blocks, bullet lists, code fences if needed)"
 }
 
 Guidelines:
