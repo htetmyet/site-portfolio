@@ -1,7 +1,70 @@
 const DEFAULT_OLLAMA_HOST = 'http://localhost:11434';
-const DEFAULT_OLLAMA_MODEL = 'mistral';
+const DEFAULT_OLLAMA_MODEL = 'llama3.2:1b';
 
-const resolveOllamaHost = () => (process.env.OLLAMA_HOST || DEFAULT_OLLAMA_HOST).replace(/\/$/, '');
+const stripTrailingSlash = (value = '') => value.replace(/\/$/, '');
+
+const parseHostList = (value = '') =>
+  value
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map(stripTrailingSlash);
+
+const looksLocalhost = (value) => /^https?:\/\/(localhost|127\.|0\.0\.0\.0)/i.test(value);
+
+const buildDockerBridgeHost = (sourceHost) => {
+  const bridgeHost = process.env.OLLAMA_DOCKER_BRIDGE_HOST || 'host.docker.internal';
+  try {
+    const parsed = new URL(sourceHost);
+    parsed.hostname = bridgeHost;
+    return stripTrailingSlash(parsed.toString());
+  } catch (_error) {
+    return `http://${bridgeHost}:11434`;
+  }
+};
+
+const buildCandidateOllamaHosts = () => {
+  const candidates = [];
+  const addCandidate = (host) => {
+    if (host && !candidates.includes(host)) {
+      candidates.push(host);
+    }
+  };
+
+  const configured = stripTrailingSlash(process.env.OLLAMA_HOST || DEFAULT_OLLAMA_HOST);
+  addCandidate(configured);
+
+  parseHostList(process.env.OLLAMA_HOST_FALLBACKS || '').forEach(addCandidate);
+
+  if (looksLocalhost(configured)) {
+    addCandidate(buildDockerBridgeHost(configured));
+  }
+
+  if (!candidates.length) {
+    candidates.push(stripTrailingSlash(DEFAULT_OLLAMA_HOST));
+  }
+
+  return candidates;
+};
+
+const runWithOllamaHost = async (label, handler) => {
+  const hosts = buildCandidateOllamaHosts();
+  const errors = [];
+
+  for (const host of hosts) {
+    try {
+      return await handler(host);
+    } catch (error) {
+      errors.push({ host, message: error?.message || 'Unknown error' });
+      console.warn(`[aiContent] ${label} failed via ${host}`, error);
+    }
+  }
+
+  const detail = errors.length
+    ? errors.map(({ host, message }) => `${host}: ${message}`).join('; ')
+    : 'No hosts were configured.';
+  throw new Error(`Unable to reach any configured Ollama host. ${detail}`);
+};
 const resolveTone = (value) => (value && value.trim() ? value.trim() : 'data scientist');
 const sanitizeKeywords = (keywords = []) => {
   if (!Array.isArray(keywords)) return ['artificial intelligence'];
@@ -209,12 +272,10 @@ export const rewriteArticleWithOllama = async ({ title, content, model: modelOve
     throw new Error('Both title and content are required to rewrite the article.');
   }
 
-  const ollamaHost = resolveOllamaHost();
   const model = modelOverride?.trim() || process.env.OLLAMA_MODEL || DEFAULT_OLLAMA_MODEL;
 
-  let response;
-  try {
-    response = await fetch(`${ollamaHost}/api/generate`, {
+  const payload = await runWithOllamaHost('Ollama generate', async (ollamaHost) => {
+    const response = await fetch(`${ollamaHost}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -224,22 +285,26 @@ export const rewriteArticleWithOllama = async ({ title, content, model: modelOve
         keep_alive: 0,
       }),
     });
-  } catch (error) {
-    console.error('[aiContent] Ollama request failed', error);
-    throw new Error('Unable to reach the local Ollama instance. Is it running?');
-  }
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(text || `Ollama returned status ${response.status}`);
+    }
+    return response.json();
+  });
 
-  if (!response.ok) {
-    const text = await response.text();
-    console.error('[aiContent] Ollama returned an error', text);
-    throw new Error('Ollama returned an error. Check the server logs for details.');
-  }
-
-  const payload = await response.json();
-  const parsed = tryParseModelJson(payload.response || '');
+  const rawResponse = payload.response || '';
+  const parsed = tryParseModelJson(rawResponse);
 
   if (!parsed?.markdown) {
-    throw new Error('The model response could not be parsed into Markdown content.');
+    const fallbackMarkdown = rawResponse.trim();
+    if (!fallbackMarkdown) {
+      throw new Error('The model response could not be parsed into Markdown content.');
+    }
+    return {
+      title: parsed?.title?.trim() || title,
+      summary: parsed?.summary?.trim() || '',
+      markdown: fallbackMarkdown,
+    };
   }
 
   return {
@@ -250,14 +315,15 @@ export const rewriteArticleWithOllama = async ({ title, content, model: modelOve
 };
 
 export const fetchOllamaModels = async () => {
-  const ollamaHost = resolveOllamaHost();
   try {
-    const response = await fetch(`${ollamaHost}/api/tags`, { method: 'GET' });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text || `Unable to load Ollama models (status ${response.status})`);
-    }
-    const payload = await response.json();
+    const payload = await runWithOllamaHost('Ollama models', async (ollamaHost) => {
+      const response = await fetch(`${ollamaHost}/api/tags`, { method: 'GET' });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Unable to load Ollama models (status ${response.status})`);
+      }
+      return response.json();
+    });
     const models = Array.isArray(payload.models) ? payload.models : [];
     if (!models.length) {
       throw new Error('No models found. Pull a model with `ollama pull <model>`.');
@@ -270,6 +336,6 @@ export const fetchOllamaModels = async () => {
     }));
   } catch (error) {
     console.error('[aiContent] Failed to query Ollama models', error);
-    throw new Error('Unable to query the local Ollama models list. Confirm Ollama is running.');
+    throw new Error(error.message || 'Unable to query the local Ollama models list. Confirm Ollama is running.');
   }
 };

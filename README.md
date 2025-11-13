@@ -60,6 +60,8 @@
   OLLAMA_MODEL=mistral
   ```
 
+- When the backend runs inside Docker, requests to `http://localhost:11434` automatically fall back to `http://host.docker.internal:11434`. Add more candidates via `OLLAMA_HOST_FALLBACKS` or set `OLLAMA_DOCKER_BRIDGE_HOST` if you expose Ollama on a different hostname or another machine on your LAN.
+
 - Make sure the chosen model is already pulled locally (e.g., `ollama pull mistral`). Requests will fail if Ollama is not running or the model is missing. The UI lets you refresh the model list, switch between pulled models, and specify comma-separated keywords (for example `robotics, multi-modal`) before fetching headlines. The keywords flow propagates to both news sources, so you are not limited to the default “AI” search terms. You can also set a custom writer tone (data scientist, world leader, comedy, etc.); that persona is injected into the prompt before sending it to the local LLM.
 
 ### Public Routes
@@ -92,6 +94,7 @@ This launches:
 - `frontend`: Nginx-served build on host port `2323`
 
 > The frontend bundle is built to call the API via `http://localhost:9000/api`, so make sure the backend port is published (as shown above) if you change the compose file.
+> If you run Ollama on the host (outside Docker), set `OLLAMA_HOST=http://host.docker.internal:11434` so the backend container can reach it. For remote hosts, use their LAN IP instead.
 
 After the stack is up, run the migrations and seed an admin user inside the backend container if needed:
 
