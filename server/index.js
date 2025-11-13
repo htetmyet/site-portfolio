@@ -9,6 +9,7 @@ import productsRoutes from './routes/products.js';
 import postsRoutes from './routes/posts.js';
 import adminUsersRoutes from './routes/adminUsers.js';
 import contactRoutes from './routes/contact.js';
+import aiContentRoutes from './routes/aiContent.js';
 import { pool } from './db.js';
 import { runMigrations } from './scripts/runMigrations.js';
 
@@ -47,6 +48,7 @@ app.use('/api/products', productsRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/admin/users', adminUsersRoutes);
 app.use('/api/contact', contactRoutes);
+app.use('/api/ai-content', aiContentRoutes);
 
 app.use((err, _req, res, _next) => {
   console.error('[unhandled]', err);

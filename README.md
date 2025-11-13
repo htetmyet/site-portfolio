@@ -44,10 +44,23 @@
 - Inside the console you'll find dedicated sections for:
   - **Settings** – company identity, hero slides, and services
   - **Posts** – manage blog content with a consistent narrative format
+  - **AI Content Studio** – source AI headlines, preview raw copy, and rewrite them with your local Ollama model into Markdown-ready drafts
   - **Products** – craft bespoke product pages with the visual canvas editor (supports rich text, quotes, lists, and links)
   - **Users** – invite new admins, edit their details, and remove access
   - **Account** – update your own name/email and change your password
   - **Background pattern** – pick from mesh, grid, node, or minimal themes and upload a logo for the site chrome
+
+### AI Content + Ollama
+
+- The admin route at `/admin/ai-content` lets you fetch a combined feed from Hacker News and r/artificial, preview each article, and generate a rewritten summary + Markdown post in a data-scientist tone.
+- The rewrite flow calls your local Ollama instance. Set the following variables in `.env` (or rely on the defaults shown):
+
+  ```bash
+  OLLAMA_HOST=http://localhost:11434
+  OLLAMA_MODEL=mistral
+  ```
+
+- Make sure the chosen model is already pulled locally (e.g., `ollama pull mistral`). Requests will fail if Ollama is not running or the model is missing. The UI lets you refresh the model list, switch between pulled models, and specify comma-separated keywords (for example `robotics, multi-modal`) before fetching headlines. The keywords flow propagates to both news sources, so you are not limited to the default “AI” search terms. You can also set a custom writer tone (data scientist, world leader, comedy, etc.); that persona is injected into the prompt before sending it to the local LLM.
 
 ### Public Routes
 

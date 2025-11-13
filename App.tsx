@@ -15,6 +15,7 @@ import BlogListPage from './pages/BlogListPage';
 import BlogDetailPage from './pages/BlogDetailPage';
 import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import AdminAiContentPage from './pages/admin/AdminAiContentPage';
 
 const App: React.FC = () => {
   return (
@@ -27,6 +28,7 @@ const App: React.FC = () => {
         <Route path="posts" element={<AdminPostsListPage />} />
         <Route path="posts/new" element={<AdminPostDetailPage />} />
         <Route path="posts/:id" element={<AdminPostDetailPage />} />
+        <Route path="ai-content" element={<AdminAiContentPage />} />
         <Route path="products" element={<AdminProductsListPage />} />
         <Route path="products/new" element={<AdminProductDetailPage />} />
         <Route path="products/:id" element={<AdminProductDetailPage />} />

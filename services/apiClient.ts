@@ -1,4 +1,15 @@
-import type { HeroSlide, Post, Product, Service, SiteContent, SiteSettings, AdminUser } from '../types';
+import type {
+  HeroSlide,
+  Post,
+  Product,
+  Service,
+  SiteContent,
+  SiteSettings,
+  AdminUser,
+  AiNewsItem,
+  AiRewriteResult,
+  AiModel,
+} from '../types';
 import { getAuthToken } from './authStorage';
 
 const normalizeBaseUrl = (value: string) => (value.endsWith('/') ? value.slice(0, -1) : value);
@@ -197,6 +208,33 @@ export const fetchSiteContent = async (): Promise<SiteContent> => {
     products,
     posts,
   };
+};
+
+const buildQueryString = (params: Record<string, string | undefined | null>) => {
+  const entries = Object.entries(params).filter(([, value]) => value !== undefined && value !== null && value !== '');
+  if (!entries.length) return '';
+  const searchParams = new URLSearchParams();
+  entries.forEach(([key, value]) => {
+    if (value) {
+      searchParams.append(key, value);
+    }
+  });
+  return `?${searchParams.toString()}`;
+};
+
+export const fetchAiNews = async (keywords?: string): Promise<AiNewsItem[]> => {
+  const query = buildQueryString({ keywords });
+  const response = await request<{ articles: AiNewsItem[] }>(`/ai-content/news${query}`);
+  return response.articles;
+};
+
+export const rewriteAiPost = async (payload: { title: string; content: string; model?: string; tone?: string }): Promise<AiRewriteResult> => {
+  return request('/ai-content/rewrite', { method: 'POST', body: payload });
+};
+
+export const fetchAiModels = async (): Promise<AiModel[]> => {
+  const response = await request<{ models: AiModel[] }>('/ai-content/models');
+  return response.models;
 };
 
 export const sendContactMessage = async (payload: { name: string; email: string; message: string }) => {

@@ -90,3 +90,26 @@ export interface AdminUser {
   createdAt?: string;
   updatedAt?: string;
 }
+
+export interface AiNewsItem {
+  id: string;
+  title: string;
+  source: string;
+  url?: string | null;
+  publishedAt?: string | null;
+  snippet: string;
+  content: string;
+}
+
+export interface AiRewriteResult {
+  title: string;
+  summary: string;
+  markdown: string;
+}
+
+export interface AiModel {
+  name: string;
+  size?: number;
+  digest?: string;
+  modifiedAt?: string | null;
+}
