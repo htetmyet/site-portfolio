@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
     logo_url TEXT,
     blog_preview_limit INTEGER DEFAULT 3,
     product_preview_limit INTEGER DEFAULT 2,
+    project_preview_limit INTEGER DEFAULT 6,
     background_pattern TEXT DEFAULT 'mesh',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -103,6 +104,9 @@ ALTER TABLE site_settings
 
 ALTER TABLE site_settings
     ADD COLUMN IF NOT EXISTS product_preview_limit INTEGER DEFAULT 2;
+
+ALTER TABLE site_settings
+    ADD COLUMN IF NOT EXISTS project_preview_limit INTEGER DEFAULT 6;
 
 ALTER TABLE site_settings
     ADD COLUMN IF NOT EXISTS logo_url TEXT;

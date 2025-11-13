@@ -14,6 +14,7 @@ const defaultSettings = {
   contactAddress: '123 Innovation Way, Tech City',
   blogPreviewLimit: 3,
   productPreviewLimit: 2,
+  projectPreviewLimit: 6,
   logoUrl: null,
   backgroundPattern: 'mesh',
 };
@@ -33,6 +34,7 @@ const ensureSettingsSchema = async () => {
         logo_url TEXT,
         blog_preview_limit INTEGER DEFAULT 3,
         product_preview_limit INTEGER DEFAULT 2,
+        project_preview_limit INTEGER DEFAULT 6,
         background_pattern TEXT DEFAULT 'mesh',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -53,12 +55,15 @@ const ensureSettingsSchema = async () => {
 
     await query('ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS blog_preview_limit INTEGER DEFAULT 3');
     await query('ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS product_preview_limit INTEGER DEFAULT 2');
+    await query('ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS project_preview_limit INTEGER DEFAULT 6');
     await query('ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS logo_url TEXT');
     await query('ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS background_pattern TEXT DEFAULT \'mesh\'');
     await query('ALTER TABLE site_settings ALTER COLUMN blog_preview_limit SET DEFAULT 3');
     await query('ALTER TABLE site_settings ALTER COLUMN product_preview_limit SET DEFAULT 2');
+    await query('ALTER TABLE site_settings ALTER COLUMN project_preview_limit SET DEFAULT 6');
     await query('ALTER TABLE site_settings ALTER COLUMN background_pattern SET DEFAULT \'mesh\'');
     await query('UPDATE site_settings SET background_pattern = \'mesh\' WHERE background_pattern IS NULL');
+    await query('UPDATE site_settings SET project_preview_limit = 6 WHERE project_preview_limit IS NULL');
   } catch (error) {
     console.error('[settings/schema]', error);
   }
@@ -79,6 +84,7 @@ router.get('/', async (_req, res) => {
               logo_url         AS "logoUrl",
               blog_preview_limit    AS "blogPreviewLimit",
               product_preview_limit AS "productPreviewLimit",
+              project_preview_limit AS "projectPreviewLimit",
               background_pattern    AS "backgroundPattern"
          FROM site_settings
         ORDER BY id ASC
@@ -121,6 +127,7 @@ const updateGeneralSettings = async (payload, client) => {
     contactAddress,
     blogPreviewLimit,
     productPreviewLimit,
+    projectPreviewLimit,
     logoUrl,
     backgroundPattern,
   } = payload;
@@ -135,6 +142,9 @@ const updateGeneralSettings = async (payload, client) => {
   const normalizedProductLimit = Number.isFinite(Number(productPreviewLimit))
     ? Number(productPreviewLimit)
     : defaultSettings.productPreviewLimit;
+  const normalizedProjectLimit = Number.isFinite(Number(projectPreviewLimit))
+    ? Number(projectPreviewLimit)
+    : defaultSettings.projectPreviewLimit;
   const normalizedPattern = backgroundPattern || defaultSettings.backgroundPattern;
 
   const existing = await client.query('SELECT id FROM site_settings LIMIT 1');
@@ -151,9 +161,10 @@ const updateGeneralSettings = async (payload, client) => {
               logo_url = $8,
               blog_preview_limit = $9,
               product_preview_limit = $10,
-              background_pattern = $11,
+              project_preview_limit = $11,
+              background_pattern = $12,
               updated_at = NOW()
-        WHERE id = $12`,
+        WHERE id = $13`,
       [
         companyName,
         tagline || null,
@@ -165,6 +176,7 @@ const updateGeneralSettings = async (payload, client) => {
         logoUrl || null,
         normalizedBlogLimit,
         normalizedProductLimit,
+        normalizedProjectLimit,
         normalizedPattern,
         existing.rows[0].id,
       ],
@@ -172,8 +184,8 @@ const updateGeneralSettings = async (payload, client) => {
   } else {
     await client.query(
       `INSERT INTO site_settings
-         (company_name, tagline, hero_headline, hero_subheadline, contact_email, contact_phone, contact_address, logo_url, blog_preview_limit, product_preview_limit, background_pattern)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+         (company_name, tagline, hero_headline, hero_subheadline, contact_email, contact_phone, contact_address, logo_url, blog_preview_limit, product_preview_limit, project_preview_limit, background_pattern)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
       [
         companyName,
         tagline || null,
@@ -185,6 +197,7 @@ const updateGeneralSettings = async (payload, client) => {
         logoUrl || null,
         normalizedBlogLimit,
         normalizedProductLimit,
+        normalizedProjectLimit,
         normalizedPattern,
       ],
     );
@@ -201,6 +214,7 @@ const updateGeneralSettings = async (payload, client) => {
             logo_url         AS "logoUrl",
             blog_preview_limit    AS "blogPreviewLimit",
             product_preview_limit AS "productPreviewLimit",
+            project_preview_limit AS "projectPreviewLimit",
             background_pattern    AS "backgroundPattern"
        FROM site_settings
       ORDER BY id ASC

@@ -50,13 +50,14 @@ const LandingPage: React.FC = () => {
           const resolvedServices = servicesResp.length ? servicesResp : defaultContent.services;
           const resolvedProducts = productsResp.length ? productsResp : defaultContent.products;
           const resolvedProjects = projectsResp.length ? projectsResp : defaultContent.projects;
+          const projectLimit = settingsResp.settings.projectPreviewLimit ?? defaultContent.settings.projectPreviewLimit ?? 6;
           const resolvedPosts = postsResp.length ? postsResp : defaultContent.posts;
 
           setContent({
             settings: settingsResp.settings,
             heroSlides: resolvedSlides,
             services: resolvedServices,
-            projects: resolvedProjects,
+            projects: resolvedProjects.slice(0, Math.max(1, projectLimit)),
             products: resolvedProducts.slice(0, Math.max(1, productLimit)),
             posts: resolvedPosts.slice(0, Math.max(1, blogLimit)),
           });

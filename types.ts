@@ -28,6 +28,7 @@ export interface SiteSettings {
   contactAddress?: string | null;
   blogPreviewLimit?: number | null;
   productPreviewLimit?: number | null;
+  projectPreviewLimit?: number | null;
   logoUrl?: string | null;
   backgroundPattern?: string | null;
 }

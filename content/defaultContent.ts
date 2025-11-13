@@ -73,6 +73,20 @@ const defaultProjects: Project[] = [
     tags: ['Computer Vision', 'IoT', 'Edge Computing'],
     imageUrl: 'https://picsum.photos/800/600?random=6',
   },
+  {
+    title: 'Aurora Insights',
+    category: 'Generative AI',
+    description: 'Automated research briefings that convert raw reports into actionable insights for enterprise innovation teams.',
+    tags: ['GenAI', 'Summarization', 'Automation'],
+    imageUrl: 'https://picsum.photos/800/600?random=16',
+  },
+  {
+    title: 'HelixOps',
+    category: 'MLOps',
+    description: 'End-to-end monitoring and retraining pipeline that keeps mission-critical AI models compliant and reliable.',
+    tags: ['MLOps', 'Monitoring', 'Compliance'],
+    imageUrl: 'https://picsum.photos/800/600?random=17',
+  },
 ];
 
 const defaultProducts: Product[] = [
@@ -161,6 +175,7 @@ const defaultSettings: SiteSettings = {
   contactAddress: '123 Innovation Way, Tech City',
   blogPreviewLimit: 3,
   productPreviewLimit: 2,
+  projectPreviewLimit: 6,
   logoUrl: null,
   backgroundPattern: 'mesh',
 };

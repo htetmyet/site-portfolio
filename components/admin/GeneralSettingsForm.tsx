@@ -11,6 +11,7 @@ const createInitialState = (settings: SiteSettings) => ({
   ...settings,
   blogPreviewLimit: settings.blogPreviewLimit ?? 3,
   productPreviewLimit: settings.productPreviewLimit ?? 2,
+  projectPreviewLimit: settings.projectPreviewLimit ?? 6,
 });
 
 const GeneralSettingsForm: React.FC<GeneralSettingsFormProps> = ({ settings, onSave, saving }) => {
@@ -74,6 +75,7 @@ const GeneralSettingsForm: React.FC<GeneralSettingsFormProps> = ({ settings, onS
         ...localSettings,
         blogPreviewLimit: localSettings.blogPreviewLimit ?? 3,
         productPreviewLimit: localSettings.productPreviewLimit ?? 2,
+        projectPreviewLimit: localSettings.projectPreviewLimit ?? 6,
         logoUrl: logoPreview ?? null,
       };
       const updated = await onSave(payload);
@@ -161,6 +163,17 @@ const GeneralSettingsForm: React.FC<GeneralSettingsFormProps> = ({ settings, onS
               min={1}
               name="productPreviewLimit"
               value={localSettings.productPreviewLimit ?? ''}
+              onChange={handleNumberChange}
+              className="mt-1 rounded-lg border border-brand-border bg-brand-bg-light px-3 py-2 focus:border-brand-primary focus:outline-none"
+            />
+          </label>
+          <label className="flex flex-col text-sm font-medium text-brand-text-dark">
+            Our Work Project Count
+            <input
+              type="number"
+              min={1}
+              name="projectPreviewLimit"
+              value={localSettings.projectPreviewLimit ?? ''}
               onChange={handleNumberChange}
               className="mt-1 rounded-lg border border-brand-border bg-brand-bg-light px-3 py-2 focus:border-brand-primary focus:outline-none"
             />
