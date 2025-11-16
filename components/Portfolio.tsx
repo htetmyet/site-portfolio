@@ -38,14 +38,14 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects }) => {
   return (
     <section id="portfolio" className="py-20 bg-brand-surface">
       <div className="container mx-auto px-6">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Our Work</h2>
-        <p className="max-w-3xl mx-auto text-brand-text-muted text-center mb-12">
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-4">Our Work</h2>
+        <p className="max-w-3xl mx-auto text-brand-text-muted text-center text-base md:text-lg mb-12">
           We take pride in delivering intelligent solutions that create real value.
         </p>
         {projects.length === 0 ? (
           <p className="text-center text-brand-text-muted">More case studies are on the way.</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {projects.map((project, index) => {
               const tags = Array.isArray(project.tags) ? project.tags : [];
               return (
@@ -61,9 +61,9 @@ const Portfolio: React.FC<PortfolioProps> = ({ projects }) => {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"></div>
                 <div className="absolute bottom-0 left-0 p-6 text-white w-full bg-black/20 backdrop-blur-sm group-hover:bg-black/40 group-hover:backdrop-blur-md rounded-t-lg transition-all duration-500">
                   <p className="text-sm font-semibold text-brand-secondary mb-1">{project.category}</p>
-                  <h3 className="text-2xl font-bold mb-2">{project.title}</h3>
+                  <h3 className="text-xl md:text-2xl font-bold mb-2">{project.title}</h3>
                   <div className="max-h-0 group-hover:max-h-40 overflow-hidden transition-all duration-500">
-                    <p className="text-gray-200 mb-4">{project.description}</p>
+                    <p className="text-sm md:text-base text-gray-200 mb-4">{project.description}</p>
                     <div className="flex flex-wrap gap-2">
                       {tags.map((tag, tagIndex) => (
                         <span

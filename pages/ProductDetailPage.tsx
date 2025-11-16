@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import type { Product, SiteSettings } from '../types';
 import { defaultContent } from '../content/defaultContent';
 import { fetchProduct, fetchSettings } from '../services/apiClient';
+import { applyDocumentBranding } from '../utils/documentBranding';
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams();
@@ -28,6 +29,11 @@ const ProductDetailPage: React.FC = () => {
         if (!isMounted) return;
         setProduct(productData);
         setSettings(settingsResp.settings);
+        applyDocumentBranding({
+          companyName: settingsResp.settings.companyName,
+          heroHeadline: settingsResp.settings.heroHeadline,
+          logoUrl: settingsResp.settings.logoUrl,
+        });
       } catch (err: any) {
         if (isMounted) {
           setError(err.message || 'Failed to load product');

@@ -16,32 +16,36 @@ import BlogDetailPage from './pages/BlogDetailPage';
 import ProductListPage from './pages/ProductListPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import AdminAiContentPage from './pages/admin/AdminAiContentPage';
+import SiteBrandingManager from './components/SiteBrandingManager';
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route index element={<AdminSettingsPage />} />
-        <Route path="account" element={<AdminAccountPage />} />
-        <Route path="posts" element={<AdminPostsListPage />} />
-        <Route path="posts/new" element={<AdminPostDetailPage />} />
-        <Route path="posts/:id" element={<AdminPostDetailPage />} />
-        <Route path="ai-content" element={<AdminAiContentPage />} />
-        <Route path="products" element={<AdminProductsListPage />} />
-        <Route path="products/new" element={<AdminProductDetailPage />} />
-        <Route path="products/:id" element={<AdminProductDetailPage />} />
-        <Route path="users" element={<AdminUsersListPage />} />
-        <Route path="users/new" element={<AdminUserDetailPage />} />
-        <Route path="users/:id" element={<AdminUserDetailPage />} />
-      </Route>
-      <Route path="/blog" element={<BlogListPage />} />
-      <Route path="/blog/:id" element={<BlogDetailPage />} />
-      <Route path="/products" element={<ProductListPage />} />
-      <Route path="/products/:id" element={<ProductDetailPage />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+    <>
+      <SiteBrandingManager />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<AdminSettingsPage />} />
+          <Route path="account" element={<AdminAccountPage />} />
+          <Route path="posts" element={<AdminPostsListPage />} />
+          <Route path="posts/new" element={<AdminPostDetailPage />} />
+          <Route path="posts/:id" element={<AdminPostDetailPage />} />
+          <Route path="ai-content" element={<AdminAiContentPage />} />
+          <Route path="products" element={<AdminProductsListPage />} />
+          <Route path="products/new" element={<AdminProductDetailPage />} />
+          <Route path="products/:id" element={<AdminProductDetailPage />} />
+          <Route path="users" element={<AdminUsersListPage />} />
+          <Route path="users/new" element={<AdminUserDetailPage />} />
+          <Route path="users/:id" element={<AdminUserDetailPage />} />
+        </Route>
+        <Route path="/blog" element={<BlogListPage />} />
+        <Route path="/blog/:id" element={<BlogDetailPage />} />
+        <Route path="/products" element={<ProductListPage />} />
+        <Route path="/products/:id" element={<ProductDetailPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 

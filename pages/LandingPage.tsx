@@ -12,6 +12,7 @@ import ProductDetail from '../components/ProductDetail';
 import type { Product, SiteContent } from '../types';
 import { defaultContent } from '../content/defaultContent';
 import { fetchPosts, fetchProducts, fetchProjects, fetchServices, fetchSettings } from '../services/apiClient';
+import { applyDocumentBranding } from '../utils/documentBranding';
 
 const LandingPage: React.FC = () => {
   const [content, setContent] = useState<SiteContent>(defaultContent);
@@ -52,6 +53,12 @@ const LandingPage: React.FC = () => {
           const resolvedProjects = projectsResp.length ? projectsResp : defaultContent.projects;
           const projectLimit = settingsResp.settings.projectPreviewLimit ?? defaultContent.settings.projectPreviewLimit ?? 6;
           const resolvedPosts = postsResp.length ? postsResp : defaultContent.posts;
+
+          applyDocumentBranding({
+            companyName: settingsResp.settings.companyName,
+            heroHeadline: settingsResp.settings.heroHeadline,
+            logoUrl: settingsResp.settings.logoUrl,
+          });
 
           setContent({
             settings: settingsResp.settings,

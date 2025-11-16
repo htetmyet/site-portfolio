@@ -4,6 +4,7 @@ import HeroSlidesForm from '../../components/admin/HeroSlidesForm';
 import ServicesManager from '../../components/admin/ServicesManager';
 import ProjectsManager from '../../components/admin/ProjectsManager';
 import type { HeroSlide, Project, Service, SiteSettings } from '../../types';
+import { applyDocumentBranding } from '../../utils/documentBranding';
 import {
   fetchServices,
   fetchProjects,
@@ -42,6 +43,11 @@ const AdminSettingsPage: React.FC = () => {
         ]);
         if (!isMounted) return;
         setSettings(settingsResp.settings);
+        applyDocumentBranding({
+          companyName: settingsResp.settings.companyName,
+          heroHeadline: settingsResp.settings.heroHeadline,
+          logoUrl: settingsResp.settings.logoUrl,
+        });
         setHeroSlides(settingsResp.heroSlides);
         setServicesState(servicesResp);
         setProjectsState(projectsResp);
@@ -67,6 +73,11 @@ const AdminSettingsPage: React.FC = () => {
     try {
       const response = await updateGeneralSettings(updatedSettings);
       setSettings(response);
+      applyDocumentBranding({
+        companyName: response.companyName,
+        heroHeadline: response.heroHeadline,
+        logoUrl: response.logoUrl,
+      });
       return response;
     } catch (err: any) {
       setError(err.message || 'Failed to update general settings');
